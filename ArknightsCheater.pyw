@@ -1434,6 +1434,8 @@ def itemEdit_clicked():
 
 def currSquad_changed():
     squadsIndex=Win.currSquad.currentIndex()
+    if len(squadsInfo)==0 :
+        return
     squadsInfoJ=json.loads(squadsInfo.replace('\'','"'))
     squadsInfoList=['name','charId','skillIndex','maxSkillIndex']
     for y in range(0,12):
