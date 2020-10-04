@@ -1042,7 +1042,7 @@ def get_data():
         if cr_skillIn in ['1','2','3']:
             cr_skillIndex=int(cr_skillIn)-1
         else:
-            cr_skillIndex=0
+            cr_skillIndex=-1
         cr_spLv = Win.table_char.item(index, 8).text()
         cr_potLv = Win.table_char.item(index, 9).text()
         if index == 0:
@@ -1278,7 +1278,7 @@ def import_data():
     import_dataFrom(fileName)
 
 def import_dataFrom(fileName):
-    global item,squadsInfo,squadsNm,charTableEdit,isMinors
+    global item,squadsInfo,squadsNm,charTableEdit,isMinors,tableCharLine
     charTableEdit=True
     if not fileName == '':
         with open(fileName, 'r', encoding='utf-8') as f:
@@ -1306,6 +1306,10 @@ def import_dataFrom(fileName):
             if skinList[secretary][j['secretarySkinId']]==skinList[secretary][skinId]:
                 Win.user_secretarySkin.setCurrentIndex(e)
         item=eval('['+str(j['item'])+']')
+        for e in range(Win.table_char.rowCount() - 1, -1, -1):
+            Win.table_char.removeRow(e)
+        tableCharLine = 0
+        Win.currSquad.clear()
         for e in j['chars']:  
             charId=j['chars'][e]['charId']
             for fp in favorPointList:
@@ -1323,7 +1327,7 @@ def import_dataFrom(fileName):
                 skillIndex='无技能'
             else:
                 spLv=j['chars'][e]['skills'][0]['specializeLevel']
-                skillIndex=skillIn
+                skillIndex=skillIn+1
             addCharList([charTable[charId]['name'],charList.index(charId),eliteLv,lv,skinList[charId][skinId],favPt,skillLv,skillIndex,spLv,potLV,''])
         squadsFirst=True
         squadsNm=j['squads']
