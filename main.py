@@ -12,14 +12,14 @@ userData=json.loads(open('.\data.acdata', 'r', encoding='UTF-8').read())
 isInit=userData['init']
 isFCM=userData['fcm']
 userIsMinors=False
-Servers = ["ak-gs.hypergryph.com", "ak-as.hypergryph.com","gs.arknights.jp", "ak-gs-localhost.hypergryph.com",
+Servers = ["ak-gs.hypergryph.com", "ak-as.hypergryph.com","gs.arknights.jp", "ak-gs-localhost.hypergryph.com","ak-gs-b-localhost.hypergryph.com",
            "ak-as-localhost.hypergryph.com"]
 
 class Cheat:
     def http_connect(self, flow: mitmproxy.http.HTTPFlow):
         if flow.request.host not in Servers and Debug is False:
             flow.response = http.HTTPResponse.make(404)
-        if flow.request.host == "ak-gs-localhost.hypergryph.com":
+        elif flow.request.host == "ak-gs-b-localhost.hypergryph.com" or flow.request.host == "ak-gs-localhost.hypergryph.com":
             flow.request.host = "ak-gs.hypergryph.com"
             flow.request.port = 8443
         elif flow.request.host == "ak-as-localhost.hypergryph.com":
