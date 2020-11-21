@@ -145,8 +145,8 @@ class Cheat:
             text = flow.response.get_text()
             print('ArknightsCheater:设置编队 >>>')
             j = json.loads(text)
-            squadId=str(j['playerDataDelta']['modified']['troop']['squads'])[2:3]
-            j['playerDataDelta']['modified']['troop']['squads'][squadId]['slots']= userData['squads'][squadId]['slots']
+            squadId=json.loads(flow.request.get_text())['squadId']
+            j['playerDataDelta']['modified']['troop']['squads'][squadId]['slots'] = userData['squads'][squadId]['slots']
             flow.response.set_text(json.dumps(j))
         if flow.request.host not in Servers and Debug is False:
             flow.response = http.HTTPResponse.make(404)
