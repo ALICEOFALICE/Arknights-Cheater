@@ -12,7 +12,7 @@ userData=json.loads(open('.\data.acdata', 'r', encoding='UTF-8').read())
 isInit=userData['init']
 isFCM=userData['fcm']
 userIsMinors=False
-Servers = ["ak-gs.hypergryph.com", "ak-as.hypergryph.com","gs.arknights.jp", "ak-gs-localhost.hypergryph.com","ak-gs-b-localhost.hypergryph.com",
+Servers = ["as.arknights.global","gs.arknights.global","ak-gs.hypergryph.com", "ak-as.hypergryph.com","gs.arknights.jp", "ak-gs-localhost.hypergryph.com","ak-gs-b-localhost.hypergryph.com",
            "ak-as-localhost.hypergryph.com"]
 
 class Cheat:
@@ -42,6 +42,13 @@ class Cheat:
                 if not j['squad']==None:
                     j['squad']['slots']=userData['squads'][str(j['squad']['squadId'])]['slots']
                 flow.request.set_content(json.dumps(j).encode())
+            elif flow.request.host in Servers and flow.request.path.startswith("/crisis/battleStart"):
+                data = flow.request.get_content()
+                print('ArknightsCheater:危机合同战斗开始 >>>')
+                j = json.loads(data)
+                if not j['squad']==None:
+                    j['squad']['slots']=userData['squads'][str(j['squad']['squadId'])]['slots']
+                flow.request.set_content(json.dumps(j).encode())
             elif flow.request.host in Servers and flow.request.path.startswith("/quest/squadFormation"):
                 data = flow.request.get_content()
                 j = json.loads(data)
@@ -56,11 +63,19 @@ class Cheat:
             if flow.request.host in Servers and flow.request.path.startswith("/account/syncData"):
                 text = flow.response.get_text()
                 j = json.loads(text)
+                
+                if 'androidDiamond' in j['user']['status'] or 'iosDiamond' in j['user']['status']:  
+                    androidDiamond=j['user']['status']['androidDiamond']
+                    iosDiamond=j['user']['status']['iosDiamond']
+                else:
+                    tdiamond=j['user']['status']['payDiamond']+j['user']['status']['freeDiamond']
+                    androidDiamond=tdiamond
+                    iosDiamond=tdiamond
                 item=[{
                     'gold': j['user']['status']['gold'],
                     'diamondShard': j['user']['status']['diamondShard'],
-                    'androidDiamond': j['user']['status']['androidDiamond'],
-                    'iosDiamond': j['user']['status']['iosDiamond'],
+                    'androidDiamond': androidDiamond,
+                    'iosDiamond': iosDiamond,
                     'practiceTicket': j['user']['status']['practiceTicket'],
                     'lggShard': j['user']['status']['lggShard'],
                     'hggShard': j['user']['status']['hggShard'],
@@ -88,7 +103,7 @@ class Cheat:
                 print('initFinished')
         if flow.request.url.startswith("https://ak-fs.hypergryph.com/announce/Android/preannouncement.meta.json") or flow.request.url.startswith("https://ak-fs.hypergryph.com/announce/IOS/preannouncement.meta.json"):
             entryGame=True
-        if flow.request.host in Servers and flow.request.path.startswith("/online/v1/ping") and isFCM:
+        if flow.request.url.startswith("https://as.hypergryph.com/online/v1/ping") and isFCM:
             j=json.loads(flow.response.get_text())
             if 'timeLeft' in j:
                 if not j['timeLeft']==-1:
@@ -130,8 +145,13 @@ class Cheat:
             j['user']['status']['secretarySkinId']=userData['secretarySkinId']
             j['user']['status']['gold']=userData['item']['gold']
             j['user']['status']['diamondShard']=userData['item']['diamondShard']
-            j['user']['status']['androidDiamond']=userData['item']['androidDiamond']
-            j['user']['status']['iosDiamond']=userData['item']['iosDiamond']
+            
+            if 'androidDiamond' in j['user']['status'] or 'iosDiamond' in j['user']['status']:  
+                j['user']['status']['androidDiamond']=userData['item']['androidDiamond']
+                j['user']['status']['iosDiamond']=userData['item']['iosDiamond']
+            else:
+                j['user']['status']['payDiamond']=userData['item']['iosDiamond'] if userData['item']['androidDiamond']<=userData['item']['iosDiamond'] else userData['item']['androidDiamond']
+            
             j['user']['status']['practiceTicket']=userData['item']['practiceTicket']
             j['user']['status']['lggShard']=userData['item']['lggShard']
             j['user']['status']['hggShard']=userData['item']['hggShard']
