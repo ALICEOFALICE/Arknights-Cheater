@@ -1,70 +1,74 @@
 print('ArknightsCheater:启动mitmproxy成功，请按帮助内操作继续。')
 import mitmproxy.http
-from mitmproxy import ctx, http
-import copy,time,json
+from mitmproxy import http
+import json, random
 
-html_notice='<html><head><meta name="viewport"content="width=device-width, initial-scale=1, minimum-scale=1"/><title>公告</title><link rel="stylesheet"href="https://ak-fs.hypergryph.com/announce/assets/css/preannouncement.css"></head><body><div class="container"><h2 class="head-title">破解用户须知</h2><div class="content">提供一种绕过服务器的破解方法，通过中间人攻击修改服务器递交的数据，<s>从而做到自欺欺人。</s><br>本软件仅供个人学习研究使用，请在下载24小时之后删除。<br>禁止对其宣传，宣传后对鹰角网络造成的经济损失后果自负。<br>一个单机游戏你也作弊，你在现实得多自卑啊!<br><img src="https://i.loli.net/2020/08/17/flOCIAto1VEgHpT.png"></div></div></body></html>'
-Debug=True
-entryGame=True
-isInit=False
-isFCM=True
-userData=json.loads(open('.\data.acdata', 'r', encoding='UTF-8').read())
-isInit=userData['init']
-isFCM=userData['fcm']
-userIsMinors=False
-Servers = ["as.arknights.global","gs.arknights.global","ak-gs.hypergryph.com", "ak-as.hypergryph.com","gs.arknights.jp", "ak-gs-localhost.hypergryph.com","ak-gs-b-localhost.hypergryph.com",
-           "ak-as-localhost.hypergryph.com"]
+entryGame = True
+isInit = False
+isFCM = True
+userData = json.loads(open('./data.acdata', 'r', encoding='UTF-8').read())
+isInit = userData['init']
+isFCM = userData['fcm']
+userIsMinors = False
+totalChars = 0
+servers = ["ak-gs-gf.hypergryph.com", "as.hypergryph.com", "ak-fs.hypergryph.com"
+           "as.arknights.jp", "gs.arknights.jp", "as.arknights.global", "gs.arknights.global",
+           "ak-conf.hypergryph.com", "ak-conf.arknights.jp", "ak-conf.arknights.global"]
 
 class Cheat:
-    def http_connect(self, flow: mitmproxy.http.HTTPFlow):
-        if flow.request.host not in Servers and Debug is False:
-            flow.response = http.HTTPResponse.make(404)
-        elif flow.request.host == "ak-gs-b-localhost.hypergryph.com" or flow.request.host == "ak-gs-localhost.hypergryph.com":
-            flow.request.host = "ak-gs.hypergryph.com"
-            flow.request.port = 8443
-        elif flow.request.host == "ak-as-localhost.hypergryph.com":
-            flow.request.host = "ak-as.hypergryph.com"
-            flow.request.port = 9443
 
     def request(self, flow):
+
         if not isInit:
-            if flow.request.host in Servers and flow.request.path.startswith("/quest/battleStart"):
+            if flow.request.host in servers and flow.request.path.startswith("/quest/battleStart"):
+
                 data = flow.request.get_content()
-                print('ArknightsCheater:战斗开始 >>>')
+                print('ArknightsCheater:战斗开始 >>>\n')
                 j = json.loads(data)
                 if not j['squad']==None:
                     j['squad']['slots']=userData['squads'][str(j['squad']['squadId'])]['slots']
                 flow.request.set_content(json.dumps(j).encode())
-            elif flow.request.host in Servers and flow.request.path.startswith("/campaign/battleStart"):
+
+            if flow.request.host in servers and flow.request.path.startswith("/campaign/battleStart"):
+
                 data = flow.request.get_content()
-                print('ArknightsCheater:龙门战斗开始 >>>')
+                print('ArknightsCheater:龙门战斗开始 >>>\n')
                 j = json.loads(data)
                 if not j['squad']==None:
                     j['squad']['slots']=userData['squads'][str(j['squad']['squadId'])]['slots']
                 flow.request.set_content(json.dumps(j).encode())
-            elif flow.request.host in Servers and flow.request.path.startswith("/crisis/battleStart"):
+
+            if flow.request.host in servers and flow.request.path.startswith("/crisis/battleStart"):
+
                 data = flow.request.get_content()
-                print('ArknightsCheater:危机合同战斗开始 >>>')
+                print('ArknightsCheater:危机合同战斗开始 >>>\n')
                 j = json.loads(data)
                 if not j['squad']==None:
                     j['squad']['slots']=userData['squads'][str(j['squad']['squadId'])]['slots']
                 flow.request.set_content(json.dumps(j).encode())
-            elif flow.request.host in Servers and flow.request.path.startswith("/quest/squadFormation"):
+
+            if flow.request.host in servers and flow.request.path.startswith("/quest/squadFormation"):
+
                 data = flow.request.get_content()
                 j = json.loads(data)
                 j['slots'] = userData['squads'][str(j['squadId'])]['slots']
                 flow.request.set_content(json.dumps(j).encode())
-            elif flow.request.host not in Servers and Debug is False:
+
+            if flow.request.host not in servers:
+
                 flow.response = http.HTTPResponse.make(404)
 
     def response(self, flow: mitmproxy.http.HTTPFlow):
+
         global entryGame,userIsMinors
+
         if isInit:
-            if flow.request.host in Servers and flow.request.path.startswith("/account/syncData"):
-                text = flow.response.get_text()
-                j = json.loads(text)
-                
-                if 'androidDiamond' in j['user']['status'] or 'iosDiamond' in j['user']['status']:  
+
+            if flow.request.host in servers and flow.request.path.startswith("/account/syncData"):
+
+                j = json.loads(flow.response.get_text())
+                # 区分国服外服
+                if 'androidDiamond' in j['user']['status'] or 'iosDiamond' in j['user']['status']:
                     androidDiamond=j['user']['status']['androidDiamond']
                     iosDiamond=j['user']['status']['iosDiamond']
                 else:
@@ -101,9 +105,13 @@ class Cheat:
                 f.write(str(data).replace('{\'"','{"').replace('}\'}','}}').replace('\'','"').replace('""','').replace('None','null')[1:-1])
                 f.close
                 print('initFinished')
+
         if flow.request.url.startswith("https://ak-fs.hypergryph.com/announce/Android/preannouncement.meta.json") or flow.request.url.startswith("https://ak-fs.hypergryph.com/announce/IOS/preannouncement.meta.json"):
+
             entryGame=True
+
         if flow.request.url.startswith("https://as.hypergryph.com/online/v1/ping") and isFCM:
+
             j=json.loads(flow.response.get_text())
             if 'timeLeft' in j:
                 if not j['timeLeft']==-1:
@@ -124,17 +132,19 @@ class Cheat:
                 ss = int(s-h*3600-m*60)
                 print('ArknightsCheater-防沉迷破解: 游戏剩余时间 '+str(h)+'小时'+str(m)+'分钟' + str(ss)+'秒 修改为 不限制，但请合理安排游戏时间。')
             print('')
-        if flow.request.url.startswith("https://ak-fs.hypergryph.com/announce/Android/preannouncement/231.html") or flow.request.url.startswith("https://ak-fs.hypergryph.com/announce/IOS/preannouncement/231.html") and not isInit:
-            flow.response.set_text(html_notice)
-        if flow.request.host in Servers and flow.request.path.startswith("/account/syncStatus") and not isInit:
+
+        if flow.request.host in servers and flow.request.path.startswith("/account/syncStatus") and not isInit:
+
             j=json.loads(flow.response.get_text())
             j['playerDataDelta']['modified']['status']['resume']=userData['resume']
             flow.response.set_text(json.dumps(j))
-        if flow.request.host in Servers and flow.request.path.startswith("/account/syncData") and not isInit:
-            text = flow.response.get_text()
-            j = json.loads(text)
+
+        if flow.request.host in servers and flow.request.path.startswith("/account/syncData") and not isInit:
+
+            global totalChars
+            j = json.loads(flow.response.get_text())
             print('')
-            print('ArknightsCheater:' + j['user']['status']['nickName'] + '#' + flow.request.headers['uid'] + ' 初始化...')   
+            print('ArknightsCheater:' + j['user']['status']['nickName'] + '#' + flow.request.headers['uid'] + ' 初始化...')
             j['user']['status']['uid']=str(userData['uid'])
             j['user']['status']['nickName']=userData['nickName']
             j['user']['status']['nickNumber']=str(userData['nickNumber'])
@@ -145,32 +155,269 @@ class Cheat:
             j['user']['status']['secretarySkinId']=userData['secretarySkinId']
             j['user']['status']['gold']=userData['item']['gold']
             j['user']['status']['diamondShard']=userData['item']['diamondShard']
-            
-            if 'androidDiamond' in j['user']['status'] or 'iosDiamond' in j['user']['status']:  
+
+            if 'androidDiamond' in j['user']['status'] or 'iosDiamond' in j['user']['status']:
                 j['user']['status']['androidDiamond']=userData['item']['androidDiamond']
                 j['user']['status']['iosDiamond']=userData['item']['iosDiamond']
             else:
                 j['user']['status']['payDiamond']=userData['item']['iosDiamond'] if userData['item']['androidDiamond']<=userData['item']['iosDiamond'] else userData['item']['androidDiamond']
-            
+
             j['user']['status']['practiceTicket']=userData['item']['practiceTicket']
             j['user']['status']['lggShard']=userData['item']['lggShard']
             j['user']['status']['hggShard']=userData['item']['hggShard']
             j['user']['status']['gachaTicket']=userData['item']['gachaTicket']
             j['user']['status']['tenGachaTicket']=userData['item']['tenGachaTicket']
             j['user']['troop']['chars']=userData['chars']
-            print('ArknightsCheater:载入成功，共%s个干员' % str(len(j['user']['troop']['chars'])))
+            totalChars = len(j['user']['troop']['chars'])
+            print('ArknightsCheater:载入成功，共%s个干员' % str(totalChars))
             print('')
             flow.response.set_text(json.dumps(j))
-        if flow.request.host in Servers and flow.request.path.startswith("/quest/squadFormation") and not isInit:
+
+        if flow.request.host in servers and flow.request.path.startswith("/quest/squadFormation") and not isInit:
+
             text = flow.response.get_text()
-            print('ArknightsCheater:设置编队 >>>')
+            print('ArknightsCheater:设置编队 >>>\n')
             j = json.loads(text)
             squadId=json.loads(flow.request.get_text())['squadId']
             j['playerDataDelta']['modified']['troop']['squads'][squadId]['slots'] = userData['squads'][squadId]['slots']
             flow.response.set_text(json.dumps(j))
-        if flow.request.host not in Servers and Debug is False:
+
+
+        if flow.request.host in servers and flow.request.path.startswith("/gacha/tenAdvancedGacha") and not isInit:
+
+            gacha = gachaSimulation()
+            flow.response = http.HTTPResponse.make(200, gacha.gachaTen(),
+                                                   {"Content-Type": "application/json"})
+
+        if flow.request.host in servers and flow.request.path.startswith("/gacha/advancedGacha") and not isInit:
+
+            gacha = gachaSimulation()
+            flow.response = http.HTTPResponse.make(200, gacha.gachaOne(),
+                                                   {"Content-Type": "application/json"})
+
+        if flow.request.host in servers:
+
+            j = json.loads(flow.response.get_text())
+            if 'error' in j and 'code'in j:
+                print('error-code:'+json.dumps(j))
+
+        if flow.request.host not in servers:
+
             flow.response = http.HTTPResponse.make(404)
-            
+
+class gachaSimulation:
+    # 模拟抽卡，代码源(fu)于(zhi) LXG-Shadow/Arknights-Dolos
+
+    def __init__(self, baodi=True):
+        self.poolData = json.loads(open('./pool_table.json', 'r', encoding='UTF-8').read())
+        self.rarityList = []
+        self.gachaList = {}
+        self.upChar = {"char_103_angel"}  # 以 上 干 员 获 得 概 率 提 升
+        self.updateInfo()
+        self.count = 0
+        self.baodi = baodi  # 保 底
+
+    def setUp(self,*args):
+        self.upChar = set(args)
+        self.updateInfo()
+
+    def addUp(self,*args):
+        for arg in args:
+            self.upChar.add(arg)
+        self.updateInfo()
+
+    def updateInfo(self):
+        self.rarityList = [str(x["rarityRank"]) for x in self.poolData["poolInfo"] for i in range(int(x["totalPercent"]*100))]
+        random.shuffle(self.rarityList)
+        self.upnormalList = {}
+        for x in self.poolData["poolInfo"]:
+            rarity = str(x["rarityRank"])
+            self.upnormalList[rarity] = ["up" for i in range(int(x["upPercent"]*100))]+["normal" for i in range(100-int(x["upPercent"]*100))]
+            self.gachaList[rarity] = {}
+            self.gachaList[rarity]["normal"] = list(set(x["charIdList"]).difference(self.upChar))
+            self.gachaList[rarity]["up"] = list(set(x["charIdList"]).intersection(self.upChar))
+            if len(self.gachaList[rarity]["normal"]) == 0:
+                self.gachaList[rarity]["normal"] = x["charIdList"]
+            if len(self.gachaList[rarity]["up"]) == 0:
+                self.gachaList[rarity]["up"] = x["charIdList"]
+
+    def updateRarityList(self):
+        for i in range(len(self.rarityList)):
+            if self.rarityList[i] != "5":
+                self.rarityList[i] = "5"
+                return
+
+    def getCharData(self,charId):
+        if "chars" in userData and len(userData["chars"]) > 0:
+            for instId in userData["chars"]:
+                if userData["chars"][instId]["charId"] == charId:
+                    return instId
+        return -1
+
+    def getOne(self):
+        self.count += 1
+        if self.baodi and self.count > 50:
+            for i in range(2):
+                self.updateRarityList()
+        rarity = random.choice(self.rarityList)
+        if rarity == "5":
+            self.count = 0
+            self.updateInfo()
+        pl = random.choice(self.upnormalList[rarity])
+        return (random.choice(self.gachaList[rarity][pl]), rarity)
+
+    def getTen(self):
+        return [self.getOne() for x in range(10)]
+
+    def gachaTen(self):
+        global totalChars
+        respData = {"gachaResultList": [], "playerDataDelta": {"deleted": {}, "modified": {}}, "result": 0}
+        print('ArknightsCheater-模拟抽卡: 十连 >>>\n')
+        charlist = self.getTen()
+        instIdList = []  # 避免重复
+        for charId, rarity in charlist:
+            gacha = {}
+            gacha["isNew"] = 1
+            gacha["charId"] = charId
+            # 是否拥有该角色
+            instId = int(self.getCharData(charId))
+            if instId == -1:
+                # 避免出现多个未拥有的干员
+                while (instId not in instIdList):
+                    instId = instId + 1
+                instIdList.append(instId)
+                gacha["charInstId"] = instId
+                gacha["itemGet"] = {}
+            else:
+                gacha["isNew"] = 0
+                gacha["charInstId"] = int(instId)
+                if rarity == "5":
+                    gacha["itemGet"] = [
+                        {
+                            "count": 15,
+                            "id": "4004",
+                            "type": "HGG_SHD"
+                        },
+                        {
+                            "count": 1,
+                            "id": "p_" + charId,
+                            "type": "MATERIAL"
+                        }
+                    ]
+                if rarity == "4":
+                    gacha["itemGet"] = [
+                        {
+                            "count": 8,
+                            "id": "4004",
+                            "type": "HGG_SHD"
+                        },
+                        {
+                            "count": 1,
+                            "id": "p_" + charId,
+                            "type": "MATERIAL"
+                        }
+                    ]
+                if rarity == "3":
+                    gacha["itemGet"] = [
+                        {
+                            "count": 30,
+                            "id": "4005",
+                            "type": "LGG_SHD"
+                        },
+                        {
+                            "count": 1,
+                            "id": "p_" + charId,
+                            "type": "MATERIAL"
+                        }
+                    ]
+                if rarity == "2":
+                    gacha["itemGet"] = [
+                        {
+                            "count": 5,
+                            "id": "4005",
+                            "type": "LGG_SHD"
+                        },
+                        {
+                            "count": 1,
+                            "id": "p_" + charId,
+                            "type": "MATERIAL"
+                        }
+                    ]
+            respData["gachaResultList"].append(gacha)
+        return json.dumps(respData)
+
+    def gachaOne(self):
+        global totalChars
+        respData = {"charGet": {}, "playerDataDelta": {"deleted": {}, "modified": {}}, "result": 0}
+        print('ArknightsCheater-模拟抽卡: 单抽 >>>\n')
+        charId, rarity = self.getOne()
+        gacha = {}
+        gacha["isNew"] = 1
+        gacha["charId"] = charId
+        # 是否拥有该角色
+        instId = int(self.getCharData(charId))
+        if instId == -1:
+            gacha["charInstId"] = totalChars + 1
+            gacha["itemGet"] = {}
+        else:
+            gacha["isNew"] = 0
+            gacha["charInstId"] = int(instId)
+            if rarity == "5":
+                gacha["itemGet"] = [
+                    {
+                        "count": 15,
+                        "id": "4004",
+                        "type": "HGG_SHD"
+                    },
+                    {
+                        "count": 1,
+                        "id": "p_" + charId,
+                        "type": "MATERIAL"
+                    }
+                ]
+            if rarity == "4":
+                gacha["itemGet"] = [
+                    {
+                        "count": 8,
+                        "id": "4004",
+                        "type": "HGG_SHD"
+                    },
+                    {
+                        "count": 1,
+                        "id": "p_" + charId,
+                        "type": "MATERIAL"
+                    }
+                ]
+            if rarity == "3":
+                gacha["itemGet"] = [
+                    {
+                        "count": 30,
+                        "id": "4005",
+                        "type": "LGG_SHD"
+                    },
+                    {
+                        "count": 1,
+                        "id": "p_" + charId,
+                        "type": "MATERIAL"
+                    }
+                ]
+            if rarity == "2":
+                gacha["itemGet"] = [
+                    {
+                        "count": 5,
+                        "id": "4005",
+                        "type": "LGG_SHD"
+                    },
+                    {
+                        "count": 1,
+                        "id": "p_" + charId,
+                        "type": "MATERIAL"
+                    }
+                ]
+
+        respData["charGet"] = gacha
+        return json.dumps(respData)
+
 addons = [
     Cheat()
 ]
